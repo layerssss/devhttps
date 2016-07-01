@@ -1,0 +1,28 @@
+{
+  "name": "devhttps",
+  "version": "1.0.3",
+  "description": "https://mypowapp.dev ==>== dynamically generated certificates ==>== http://mypowapp.dev",
+  "main": "index.js",
+  "bin": {
+    "devhttps": "bin/devhttps.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/layerssss/devhttps.git"
+  },
+  "author": "Michael Yin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/layerssss/devhttps/issues"
+  },
+  "homepage": "https://github.com/layerssss/devhttps#readme",
+  "dependencies": {
+    "async": "^2.0.0-rc.6",
+    "iced-coffee-script": "^108.0.11",
+    "pem": "^1.8.3",
+    "underscore.string": "^3.3.4"
+  }
+}
