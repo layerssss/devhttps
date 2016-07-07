@@ -17,10 +17,17 @@ unless config.ca_key && config.ca_crt
   console.log '[ca] generating key...'
   await pem.createPrivateKey defer e, { key }
   throw e if e
+  console.log '[ca] generating request...'
+  await pem.createCSR
+    clientKey: key
+    commonName: 'Development Certificate Authority for devhttps'
+  , defer e, { csr }
+  throw e if e
   config.ca_key = key
   console.log '[ca] generating certificate...'
   await pem.createCertificate
-    clientKey: config.ca_key
+    clientKey: key
+    csr: csr
     selfSigned: true
     days: 1800
   , defer e, { certificate }
