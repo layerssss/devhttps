@@ -1,6 +1,6 @@
 {
   "name": "devhttps",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "https://mypowapp.dev ==>== dynamically generated certificates ==>== http://mypowapp.dev",
   "main": "index.js",
   "bin": {
