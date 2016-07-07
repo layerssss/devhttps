@@ -105,11 +105,12 @@ server = https.createServer
 
 https_port = Number process.argv[2]
 http_port = Number process.argv[3]
+https_bind = process.argv[4] || 'localhost'
 
 unless !isNaN(https_port) && !isNaN(http_port) && https_port && http_port
-  throw new Error "Usage: devhttps HTTPSPORT HTTPPORT"
-server.listen https_port, ->
-  console.log "https://localhost:#{https_port} => http://localhost:#{http_port}"
+  throw new Error "Usage: devhttps HTTPSPORT HTTPPORT or devhttps HTTPSPORT HTTPPORT HTTPSBIND"
+server.listen https_port, https_bind, ->
+  console.log "https://#{https_bind}:#{https_port} => http://#{https_bind}:#{http_port}"
 
 
 
