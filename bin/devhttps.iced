@@ -44,6 +44,7 @@ unless config.ca_key && config.ca_crt
     console.log e.message
   else
     console.log '[ca] certificate saved to .devhttps.ca.crt'
+console.log '[ca] certificate ready.'
 
 ms_day = 3600 * 24
 cert_expiry_days = 60
@@ -84,7 +85,9 @@ server = https.createServer
         crt: crt
         key: key
         created_at: Date.now()
-    await setTimeout defer(), 5000
+      console.log "[#{domain}] waiting 5 seconds for the certificate to be current..."
+      await setTimeout defer(), 5000
+      console.log "[#{domain}] certificate ready."
     credentials = tls.createSecureContext
       cert: config.certs[domain].crt
       key: config.certs[domain].key
