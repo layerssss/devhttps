@@ -9,6 +9,12 @@ config = {
   certs: {}
 }
 
+
+https_port = Number process.argv[2]
+http_port = Number process.argv[3]
+https_bind = process.argv[4] || 'localhost'
+
+
 unless config.ca_key && config.ca_crt
   console.log '[ca] loading...'
   await fs.readFile '.devhttps.ca.key', defer e, config.ca_key
@@ -48,6 +54,42 @@ console.log '[ca] certificate ready.'
 
 ms_day = 3600 * 24
 cert_expiry_days = 60
+
+
+prepare_domain_certificate = (domain, cb)=>
+  domain = domain.toLowerCase()
+  if config.certs[domain] && Date.now() - config.certs[domain].created_at > ms_day * (cert_expiry_days - 1)
+    console.log "[#{domain}] certicate expired."
+    delete config.certs[domain]
+  unless config.certs[domain]
+    console.log "[#{domain}] generating key..."
+    await pem.createPrivateKey defer e, { key }
+    return cb e if e
+    console.log "[#{domain}] generating request..."
+    await pem.createCSR
+      clientKey: key
+      commonName: domain
+    , defer e, { csr }
+    return cb e if e
+    console.log "[#{domain}] signing request..."
+    await pem.createCertificate
+      serviceKey: config.ca_key
+      serviceCertificate: config.ca_crt
+      serial: Date.now()
+      csr: csr
+      days: cert_expiry_days
+    , defer e, { certificate }
+    return cb e if e
+    crt = certificate
+    config.certs[domain] =
+      crt: crt
+      key: key
+      created_at: Date.now()
+    console.log "[#{domain}] waiting 5 seconds for the certificate to be current..."
+    await setTimeout defer(), 5000
+    console.log "[#{domain}] certificate ready."
+  return cb null
+
 transform_headers = (raw_headers)=>
   headers = {}
   for k, v of raw_headers
@@ -55,39 +97,17 @@ transform_headers = (raw_headers)=>
       s(match).titleize().value()
     headers[k] = v
   headers
+
+await prepare_domain_certificate https_bind, defer e
+throw e if e
+
 server = https.createServer
+  cert: config.certs[https_bind].crt
+  key: config.certs[https_bind].key
+  ca: [config.ca_crt]
   SNICallback: (domain, cb)->
-    domain = domain.toLowerCase()
-    if config.certs[domain] && Date.now() - config.certs[domain].created_at > ms_day * (cert_expiry_days - 1)
-      console.log "[#{domain}] certicate expired."
-      delete config.certs[domain]
-    unless config.certs[domain]
-      console.log "[#{domain}] generating key..."
-      await pem.createPrivateKey defer e, { key }
-      throw e if e
-      console.log "[#{domain}] generating request..."
-      await pem.createCSR
-        clientKey: key
-        commonName: domain
-      , defer e, { csr }
-      throw e if e
-      console.log "[#{domain}] signing request..."
-      await pem.createCertificate
-        serviceKey: config.ca_key
-        serviceCertificate: config.ca_crt
-        serial: Date.now()
-        csr: csr
-        days: cert_expiry_days
-      , defer e, { certificate }
-      throw e if e
-      crt = certificate
-      config.certs[domain] =
-        crt: crt
-        key: key
-        created_at: Date.now()
-      console.log "[#{domain}] waiting 5 seconds for the certificate to be current..."
-      await setTimeout defer(), 5000
-      console.log "[#{domain}] certificate ready."
+    await prepare_domain_certificate domain, defer e
+    throw cb e if e
     credentials = tls.createSecureContext
       cert: config.certs[domain].crt
       key: config.certs[domain].key
@@ -112,10 +132,6 @@ server = https.createServer
     req.pipe proxy_req
     req.resume()
     
-
-https_port = Number process.argv[2]
-http_port = Number process.argv[3]
-https_bind = process.argv[4] || 'localhost'
 
 unless !isNaN(https_port) && !isNaN(http_port) && https_port && http_port
   throw new Error "Usage: devhttps HTTPSPORT HTTPPORT or devhttps HTTPSPORT HTTPPORT HTTPSBIND"
