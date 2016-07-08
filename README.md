@@ -13,6 +13,9 @@ devhttps 1443 80
 
 # or directly..
 sudo devhttps 443 80
+
+# local network or any custom host
+devhttps 443 80 192.168.1.101
 ```
 
 ## How to let the Chrome display the green lock
